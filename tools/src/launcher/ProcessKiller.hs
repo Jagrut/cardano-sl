@@ -2,25 +2,25 @@
 
 module ProcessKiller
         ( stopProcess,
-          killProcess,
-          shellReturnHandle
+          killProcess
         ) where
 
-import System.Process
-import System.Process.Internals ( withProcessHandle
-                                , ProcessHandle__(..)
-                                , ProcessHandle )
+import Control.Concurrent.MVar (readMVar)
 
-#if defined(OS_WINDOWS)
-import System.Win32.Process (terminateProcessById)
+#ifdef mingw32_HOST_OS
 import System.Win32.Console (generateConsoleCtrlEvent, cTRL_C_EVENT)
+import System.Win32.Process (getProcessId)
+import qualified System.Process as P
 #else
 import System.Posix.Signals hiding (killProcess)
+import System.Process (terminateProcess)
+import System.Process.Internals (ProcessHandle__(..),
+                                 ProcessHandle(..),
+                                 withProcessHandle)
 #endif
 
-#if defined(WINDOWS)
-
-stopProcess :: ProcessHandle -> IO ()
+#ifdef mingw32_HOST_OS
+stopProcess :: P.ProcessHandle -> IO ()
 stopProcess ph = do
   pid <- getPid ph
   stop <- case pid of
@@ -28,15 +28,22 @@ stopProcess ph = do
     Just pD -> do
       putStrLn "Stop me, oh, stop me"
       generateConsoleCtrlEvent cTRL_C_EVENT pD
+  return ()
+  where
+    getPid (P.ProcessHandle mh _ _) = do
+      p_ <- readMVar mh
+      case p_ of
+        P.OpenHandle h -> do
+          pid <- getProcessId h
+          return $ Just pid
+        _ -> return Nothing
 
-killProcess :: ProcessHandle -> IO ()
+killProcess :: P.ProcessHandle -> IO ()
 killProcess ph = do
-  putStrLn "Murder most foul, as in the best it is, But this most foul, strange, and unnatural."
-  terminateProcess ph
-
+  putStrLn "Murder most foul, as in the best it is, but this most foul, strange, and unnatural"
+  P.terminateProcess ph
 
 #else
-
 stopProcess :: ProcessHandle -> IO ()
 stopProcess ph = do
   putStrLn "Stop me, oh, stop me"
@@ -50,11 +57,4 @@ killProcess ph = do
       OpenHandle h -> do
         putStrLn "Murder most foul, as in the best it is, But this most foul, strange, and unnatural."
         signalProcess sigKILL h
-        
-
 #endif
-
-shellReturnHandle :: String -> IO ProcessHandle
-shellReturnHandle cmd = do
-  (_, _, _, phandle) <- createProcess (shell cmd)
-  return phandle
