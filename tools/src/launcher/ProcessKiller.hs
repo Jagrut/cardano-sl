@@ -11,7 +11,7 @@ import Control.Concurrent.MVar (MVar(..), readMVar)
 import System.Win32.Console (generateConsoleCtrlEvent, cTRL_C_EVENT)
 import System.Win32.Process (getProcessId)
 import qualified System.Process as P
-import qualified System.Process.Internals as P
+import qualified System.Process.Internals as Pi
 #else
 import System.Posix.Signals hiding (killProcess)
 import System.Process (terminateProcess)
@@ -31,10 +31,10 @@ import System.Process.Internals (ProcessHandle__(..),
         generateConsoleCtrlEvent cTRL_C_EVENT pD
     return ()
     where
-      getPid (P.ProcessHandle mh _) = do
+      getPid (Pi.ProcessHandle mh _) = do
         p_ <- readMVar mh
         case p_ of
-          P.OpenHandle h -> do
+          Pi.OpenHandle h -> do
             pid <- getProcessId h
             return $ Just pid
           _ -> return Nothing
