@@ -5,7 +5,7 @@ module ProcessKiller
           killProcess
         ) where
 
-import Control.Concurrent.MVar (readMVar)
+import Control.Concurrent.MVar (MVar(..), readMVar)
 
 #ifdef mingw32_HOST_OS
 import System.Win32.Console (generateConsoleCtrlEvent, cTRL_C_EVENT)
@@ -30,7 +30,7 @@ stopProcess ph = do
       generateConsoleCtrlEvent cTRL_C_EVENT pD
   return ()
   where
-    getPid (P.ProcessHandle mh _ _) = do
+    getPid (P.ProcessHandle mh _) = do
       p_ <- readMVar mh
       case p_ of
         P.OpenHandle h -> do
