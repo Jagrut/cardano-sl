@@ -5,7 +5,7 @@ module ProcessKiller
           killProcess
         ) where
 
-import Control.Concurrent.MVar (MVar(..), readMVar)
+import Control.Concurrent.MVar (readMVar)
 
 #ifdef mingw32_HOST_OS
 import System.Win32.Console (generateConsoleCtrlEvent, cTRL_C_EVENT)
@@ -24,8 +24,8 @@ import System.Process.Internals (ProcessHandle__(..),
 stopProcess :: P.ProcessHandle -> IO ()
 stopProcess ph = do
   pid <- getPid ph
-  stop <- case pid of
-    Nothing -> print "wtf"
+  case pid of
+    Nothing -> putStrLn "wtf"
     Just pD -> do
       putStrLn "Stop me, oh, stop me"
       generateConsoleCtrlEvent cTRL_C_EVENT pD
